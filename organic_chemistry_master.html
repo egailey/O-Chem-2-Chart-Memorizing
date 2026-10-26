@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChemForge: Organic Reaction Master</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        chem: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            800: '#166534',
+                            900: '#14532d',
+                            dark: '#0f172a',
+                            card: '#1e293b',
+                            border: '#334155'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f17;
+            color: #f1f5f9;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        /* 3D Card Flip Animation */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        /* Glowing effects */
+        .glow-green {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.25);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.25);
+        }
+        .glow-purple {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-slate-100 selection:bg-emerald-500 selection:text-white">
+
+    <!-- TOP NAVBAR -->
+    <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            
+            <!-- Logo & Brand -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg glow-green">
+                    <i class="fa-solid fa-flask"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+                        ChemForge
+                    </h1>
+                    <p class="text-xs text-slate-400 font-medium">Reaction Master & Quizzer</p>
+                </div>
+            </div>
+
+            <!-- Deck Switcher & Deck Builder Trigger -->
+            <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+                <div class="relative flex-1 sm:w-64">
+                    <i class="fa-solid fa-layer-group absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <select id="deckSelector" onchange="switchDeck(this.value)" class="w-full bg-slate-800 text-slate-200 text-sm font-medium rounded-lg pl-9 pr-8 py-2 border border-slate-700 focus:outline-none focus:border-emerald-500 cursor-pointer appearance-none">
+                        <!-- Options populated dynamically -->
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                </div>
+
+                <button onclick="openDeckModal()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-md hover:shadow-emerald-900/40">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Deck</span>
+                </button>
+
+                <button onclick="openManageDecksModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-folder-gear"></i>
+                    <span>Manage Decks</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 flex-1 flex flex-col gap-6">
+
+        <!-- DECK SUMMARY BANNER -->
+        <div id="deckBanner" class="glass-panel rounded-2xl p-4 sm:p-6 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2 mb-1">
+                    <span id="deckBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        Built-in Deck
+                    </span>
+                    <span id="deckSizeBadge" class="text-xs text-slate-400 font-medium">-- Substrates | -- Reagents</span>
+                </div>
+                <h2 id="deckTitle" class="text-xl sm:text-2xl font-extrabold text-white">Oxidation Methods</h2>
+                <p id="deckDescription" class="text-sm text-slate-400 mt-1">Master oxidation reactions, reagents, and functional group conversions.</p>
+            </div>
+            
+            <div class="flex items-center gap-3 self-end md:self-center">
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs text-slate-400 uppercase font-semibold tracking-wider">Total Reactions</p>
+                    <p id="totalReactionsCount" class="text-xl font-black text-emerald-400 code-font">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODE NAVIGATION TABS -->
+        <div class="flex items-center justify-start overflow-x-auto gap-2 border-b border-slate-800 pb-2 no-scrollbar">
+            <button id="tab-matrix" onclick="switchMode('matrix')" class="mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap bg-emerald-500 text-slate-950 font-bold shadow-md">
+                <i class="fa-solid fa-table-cells"></i>
+                <span>Reference Matrix</span>
+            </button>
+            <button id="tab-flashcards" onclick="switchMode('flashcards')" class="mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-clone"></i>
+                <span>3D Flashcards</span>
+            </button>
+            <button id="tab-mcq" onclick="switchMode('mcq')" class="mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-circle-question"></i>
+                <span>Multiple Choice</span>
+            </button>
+            <button id="tab-recall" onclick="switchMode('recall')" class="mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-keyboard"></i>
+                <span>Free Recall</span>
+            </button>
+            <button id="tab-exam" onclick="switchMode('exam')" class="mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-clipboard-check"></i>
+                <span>Full Grid Exam</span>
+            </button>
+        </div>
+
+        <!-- MODE 1: REFERENCE MATRIX -->
+        <section id="view-matrix" class="mode-view flex flex-col gap-4">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                <div class="relative w-full sm:w-72">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                    <input type="text" id="matrixSearch" oninput="filterMatrixTable()" placeholder="Search substrate or reagent..." class="w-full bg-slate-800 text-xs text-slate-200 rounded-lg pl-8 pr-3 py-2 border border-slate-700 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div class="flex items-center gap-3 text-xs font-medium text-slate-400">
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-500/30 border border-emerald-500 inline-block"></span> Product</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-rose-500/20 border border-rose-500/50 inline-block"></span> No Reaction</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-slate-800 border border-slate-700 inline-block"></span> N/A (--)</span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl border border-slate-800 shadow-2xl glass-panel max-h-[600px] overflow-y-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 z-20 bg-slate-900/95 text-slate-300 uppercase text-[11px] font-bold tracking-wider border-b border-slate-800">
+                        <tr id="matrixHeaderRow">
+                            <th class="p-4 min-w-[160px] bg-slate-950/90 border-r border-slate-800 sticky left-0 z-30">Functional Group</th>
+                            <!-- Columns inserted dynamically -->
+                        </tr>
+                    </thead>
+                    <tbody id="matrixBody" class="divide-y divide-slate-800/60 text-xs font-medium">
+                        <!-- Rows inserted dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- MODE 2: 3D FLASHCARDS -->
+        <section id="view-flashcards" class="mode-view hidden flex flex-col items-center justify-center py-4 gap-6">
+            <div class="flex items-center justify-between w-full max-w-xl text-xs font-medium text-slate-400">
+                <span id="fcProgress">Card 1 of 10</span>
+                <span id="fcMasteredCount" class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check"></i> 0 Mastered</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full max-w-xl h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div id="fcProgressBar" class="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 w-0 transition-all duration-300"></div>
+            </div>
+
+            <!-- 3D Card Scene -->
+            <div class="w-full max-w-xl h-80 perspective-1000 cursor-pointer" onclick="flipFlashcard()">
+                <div id="flashcardInner" class="relative w-full h-full transform-style-3d rounded-3xl border border-slate-700/80 bg-slate-900/90 p-8 shadow-2xl flex flex-col justify-between">
+                    <!-- FRONT SIDE -->
+                    <div class="absolute inset-0 backface-hidden rounded-3xl p-8 flex flex-col justify-between bg-gradient-to-b from-slate-800/80 to-slate-900/90 border border-slate-700/60">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">Substrate & Reagent</span>
+                            <i class="fa-solid fa-rotate text-slate-500 hover:text-slate-300 text-sm"></i>
+                        </div>
+                        <div class="text-center my-auto space-y-3">
+                            <p class="text-xs text-slate-400 uppercase font-semibold tracking-wider">Substrate</p>
+                            <h3 id="fcSubstrate" class="text-2xl font-extrabold text-white">--</h3>
+                            <p class="text-xs text-slate-400 uppercase font-semibold tracking-wider pt-2">Reagent / Conditions</p>
+                            <p id="fcReagent" class="text-lg font-bold text-cyan-300 code-font">--</p>
+                        </div>
+                        <div class="text-center text-xs text-slate-500 font-medium">
+                            <i class="fa-solid fa-hand-pointer mr-1"></i> Click anywhere to flip
+                        </div>
+                    </div>
+
+                    <!-- BACK SIDE -->
+                    <div class="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl p-8 flex flex-col justify-between bg-gradient-to-b from-slate-900 to-slate-950 border border-emerald-500/40">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20">Reaction Product</span>
+                            <i class="fa-solid fa-rotate text-slate-500 text-sm"></i>
+                        </div>
+                        <div class="text-center my-auto space-y-2">
+                            <p class="text-xs text-slate-400 uppercase font-semibold tracking-wider">Outcome / Product</p>
+                            <h2 id="fcProduct" class="text-3xl font-black text-emerald-400 tracking-wide">--</h2>
+                        </div>
+                        <div class="text-center text-xs text-slate-500 font-medium">
+                            <i class="fa-solid fa-arrow-right-rotate mr-1"></i> Click to flip back
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flashcard Control Buttons -->
+            <div class="flex items-center gap-3 max-w-xl w-full justify-center">
+                <button onclick="prevFlashcard()" class="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <button onclick="markFlashcardMastered()" class="flex-1 py-3 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 rounded-xl font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-check"></i> Mastered
+                </button>
+                <button onclick="shuffleFlashcards()" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition font-semibold text-xs flex items-center gap-1.5">
+                    <i class="fa-solid fa-shuffle"></i> Shuffle
+                </button>
+                <button onclick="nextFlashcard()" class="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- MODE 3: MULTIPLE CHOICE QUIZ -->
+        <section id="view-mcq" class="mode-view hidden flex flex-col items-center justify-center py-4">
+            <div class="max-w-xl w-full glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800 flex flex-col gap-6 shadow-2xl">
+                <!-- Score Bar -->
+                <div class="flex items-center justify-between text-xs font-bold text-slate-400 border-b border-slate-800 pb-3">
+                    <span class="flex items-center gap-1.5 text-emerald-400">
+                        <i class="fa-solid fa-fire"></i> Streak: <span id="mcqStreak">0</span>
+                    </span>
+                    <span id="mcqScore">Score: 0 / 0</span>
+                </div>
+
+                <!-- Question -->
+                <div class="text-center space-y-2 py-2">
+                    <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Predict the Product</p>
+                    <p class="text-sm text-slate-300">What is the result when <span id="mcqSubstrate" class="text-white font-bold underline decoration-emerald-500">--</span> reacts with:</p>
+                    <div id="mcqReagent" class="text-lg font-extrabold text-cyan-300 code-font bg-slate-950 py-3 px-4 rounded-xl border border-slate-800 mt-2">--</div>
+                </div>
+
+                <!-- Options -->
+                <div id="mcqOptions" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Options inserted dynamically -->
+                </div>
+
+                <!-- Feedback Banner -->
+                <div id="mcqFeedback" class="hidden rounded-xl p-4 text-center text-xs font-bold transition"></div>
+
+                <!-- Next Button -->
+                <button id="mcqNextBtn" onclick="nextMcqQuestion()" class="hidden w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl transition shadow-lg">
+                    Next Question <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- MODE 4: FREE RECALL / TYPE QUIZ -->
+        <section id="view-recall" class="mode-view hidden flex flex-col items-center justify-center py-4">
+            <div class="max-w-xl w-full glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800 flex flex-col gap-6 shadow-2xl">
+                <!-- Score Bar -->
+                <div class="flex items-center justify-between text-xs font-bold text-slate-400 border-b border-slate-800 pb-3">
+                    <span class="flex items-center gap-1.5 text-purple-400">
+                        <i class="fa-solid fa-bullseye"></i> Recall Master
+                    </span>
+                    <span id="recallScore">Score: 0 / 0</span>
+                </div>
+
+                <!-- Question -->
+                <div class="text-center space-y-2 py-2">
+                    <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Active Recall Challenge</p>
+                    <p class="text-sm text-slate-300">Substrate: <span id="recallSubstrate" class="text-white font-bold">--</span></p>
+                    <div id="recallReagent" class="text-lg font-extrabold text-cyan-300 code-font bg-slate-950 py-3 px-4 rounded-xl border border-slate-800 mt-2">--</div>
+                </div>
+
+                <!-- Helper Quick Pills -->
+                <div class="space-y-1">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Quick Select / Helper Pills:</p>
+                    <div id="recallHelperPills" class="flex flex-wrap gap-1.5">
+                        <!-- Pills inserted dynamically -->
+                    </div>
+                </div>
+
+                <!-- Input & Submit -->
+                <form onsubmit="submitRecallAnswer(event)" class="space-y-3">
+                    <div class="relative">
+                        <input type="text" id="recallInput" placeholder="Type expected outcome (e.g. alcohol, No Reaction)..." autocomplete="off" class="w-full bg-slate-950 text-emerald-400 font-bold text-sm rounded-xl pl-4 pr-10 py-3 border border-slate-700 focus:outline-none focus:border-emerald-500">
+                        <button type="button" onclick="showRecallHint()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-amber-400 text-xs font-bold px-1.5 py-1 rounded bg-slate-800" title="Get Hint">
+                            <i class="fa-solid fa-lightbulb"></i>
+                        </button>
+                    </div>
+
+                    <p id="recallHintText" class="text-xs text-amber-400 hidden font-medium text-center"></p>
+
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm rounded-xl transition shadow-lg">
+                        Submit Answer
+                    </button>
+                </form>
+
+                <!-- Feedback Banner -->
+                <div id="recallFeedback" class="hidden rounded-xl p-4 text-center text-xs font-bold transition"></div>
+
+                <button id="recallNextBtn" onclick="nextRecallQuestion()" class="hidden w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm rounded-xl transition border border-slate-700">
+                    Next Question <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- MODE 5: FULL GRID EXAM CHALLENGE -->
+        <section id="view-exam" class="mode-view hidden flex flex-col gap-6">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-slate-800">
+                <div>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-graduation-cap text-emerald-400"></i>
+                        Full Grid Master Challenge
+                    </h3>
+                    <p class="text-xs text-slate-400">Fill in every blank cell for the current chart, then click "Grade Exam".</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="resetExamGrid()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold transition">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> Reset
+                    </button>
+                    <button onclick="gradeExamGrid()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-extrabold transition shadow-lg glow-green">
+                        <i class="fa-solid fa-check-double mr-1"></i> Grade Exam
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grade Score Card (Hidden until graded) -->
+            <div id="examResultCard" class="hidden glass-panel rounded-2xl p-6 border border-emerald-500/40 bg-gradient-to-r from-slate-900 to-slate-950 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div id="examGradeCircle" class="w-20 h-20 rounded-2xl bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center text-3xl font-black text-emerald-400">
+                        A+
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-extrabold text-white">Exam Results</h4>
+                        <p id="examScoreText" class="text-sm text-slate-300 font-medium">You scored 0 out of 0 (0%)</p>
+                        <p id="examFeedbackText" class="text-xs text-emerald-400 font-semibold mt-1">Outstanding mastery!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Grid Container -->
+            <div class="overflow-x-auto rounded-2xl border border-slate-800 shadow-2xl glass-panel max-h-[600px] overflow-y-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 z-20 bg-slate-900/95 text-slate-300 uppercase text-[11px] font-bold tracking-wider border-b border-slate-800">
+                        <tr id="examHeaderRow">
+                            <th class="p-4 min-w-[160px] bg-slate-950/90 border-r border-slate-800 sticky left-0 z-30">Functional Group</th>
+                            <!-- Columns inserted dynamically -->
+                        </tr>
+                    </thead>
+                    <tbody id="examBody" class="divide-y divide-slate-800/60 text-xs font-medium">
+                        <!-- Rows inserted dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800/80 bg-slate-950 py-4 px-4 text-center text-xs text-slate-500">
+        <p>ChemForge Organic Chemistry Suite &bull; Interactive Reaction Charts & Quiz Zer</p>
+    </footer>
+
+    <!-- MODAL: REACTION CELL DETAIL -->
+    <div id="detailModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-white text-base flex items-center gap-2">
+                    <i class="fa-solid fa-atom text-emerald-400"></i> Reaction Detail
+                </h3>
+                <button onclick="closeDetailModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-3 text-xs">
+                <div>
+                    <span class="text-slate-400 uppercase font-semibold text-[10px] tracking-wider">Substrate / Functional Group:</span>
+                    <p id="modalSubstrate" class="text-sm font-extrabold text-white mt-0.5">--</p>
+                </div>
+                <div>
+                    <span class="text-slate-400 uppercase font-semibold text-[10px] tracking-wider">Reagent / Conditions:</span>
+                    <p id="modalReagent" class="text-sm font-bold text-cyan-300 code-font mt-0.5">--</p>
+                </div>
+                <div>
+                    <span class="text-slate-400 uppercase font-semibold text-[10px] tracking-wider">Result / Product:</span>
+                    <div id="modalProductBadge" class="mt-1 inline-block px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        --
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeDetailModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition border border-slate-700">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL: CREATE / EDIT CUSTOM DECK -->
+    <div id="deckModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-4xl w-full p-6 shadow-2xl space-y-5 my-8">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 id="deckModalTitle" class="font-extrabold text-white text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-emerald-400"></i> Create Custom Reaction Chart
+                </h3>
+                <button onclick="closeDeckModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Title & Description Form -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Chart / Deck Title</label>
+                    <input type="text" id="customTitle" placeholder="e.g., Grignard Reactions Chart" class="w-full bg-slate-950 text-white text-xs rounded-xl px-3 py-2.5 border border-slate-700 focus:outline-none focus:border-emerald-500 font-semibold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Description</label>
+                    <input type="text" id="customDesc" placeholder="e.g., Key Organometallic conversions..." class="w-full bg-slate-950 text-white text-xs rounded-xl px-3 py-2.5 border border-slate-700 focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <!-- Columns (Reagents) Builder -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Reagents (Columns)</label>
+                    <button type="button" onclick="addCustomColumn()" class="text-xs text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Add Reagent Column
+                    </button>
+                </div>
+                <div id="customColsContainer" class="flex flex-wrap gap-2">
+                    <!-- Column inputs inserted dynamically -->
+                </div>
+            </div>
+
+            <!-- Rows (Substrates) Builder -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Substrates / Functional Groups (Rows)</label>
+                    <button type="button" onclick="addCustomRow()" class="text-xs text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Add Substrate Row
+                    </button>
+                </div>
+                <div id="customRowsContainer" class="flex flex-wrap gap-2">
+                    <!-- Row inputs inserted dynamically -->
+                </div>
+            </div>
+
+            <!-- Interactive Cell Matrix Editor -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Chart Grid Outcomes</label>
+                    <button type="button" onclick="fillBlanksNoReaction()" class="text-xs text-slate-400 hover:text-slate-200">
+                        Fill Empty with "No Reaction"
+                    </button>
+                </div>
+                <div class="overflow-x-auto max-h-60 rounded-xl border border-slate-800">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-950 text-slate-300 font-bold">
+                            <tr id="customGridHeader">
+                                <th class="p-2 border-r border-slate-800">Substrate</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customGridBody" class="divide-y divide-slate-800 bg-slate-900/50">
+                            <!-- Matrix cells inserted dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end gap-3 border-t border-slate-800 pt-3">
+                <button onclick="closeDeckModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition">
+                    Cancel
+                </button>
+                <button onclick="saveCustomDeck()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl transition shadow-lg glow-green">
+                    <i class="fa-solid fa-floppy-disk mr-1"></i> Save Chart Deck
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: MANAGE & IMPORT/EXPORT DECKS -->
+    <div id="manageModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-extrabold text-white text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-folder-open text-emerald-400"></i> Manage Chart Decks
+                </h3>
+                <button onclick="closeManageDecksModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Export / Import Buttons -->
+            <div class="flex items-center justify-between bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                <span class="text-xs font-bold text-slate-300">Backup & Share Decks:</span>
+                <div class="flex gap-2">
+                    <button onclick="exportDecksJSON()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-xs font-bold transition flex items-center gap-1 border border-slate-700">
+                        <i class="fa-solid fa-download"></i> Export JSON
+                    </button>
+                    <label class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg text-xs font-bold transition flex items-center gap-1 border border-slate-700 cursor-pointer">
+                        <i class="fa-solid fa-upload"></i> Import JSON
+                        <input type="file" id="importJsonInput" accept=".json" onchange="importDecksJSON(event)" class="hidden">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Decks List -->
+            <div id="manageDecksList" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                <!-- Items populated dynamically -->
+            </div>
+
+            <button onclick="closeManageDecksModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition border border-slate-700">
+                Close
+            </button>
+        </div>
+    </div>
+
+
+    <!-- APP LOGIC JAVASCRIPT -->
+    <script>
+        // ==========================================
+        // 1. PRE-LOADED DATASETS (EXACT CHARTS)
+        // ==========================================
+
+        const BUILTIN_DECKS = {
+            "oxidation": {
+                id: "oxidation",
+                title: "Oxidation Methods of Various Functional Groups",
+                description: "Complete oxidation chart mapping functional groups to specific reagents and outcomes.",
+                builtin: true,
+                columns: [
+                    "H2SO4/H2O",
+                    "1-Hg(OAc)2 THF/H2O 2-NaBH4",
+                    "1-BH3 THF 2-HOOH/NaOH",
+                    "H2SO4/HgSO4/H2O",
+                    "1-(Cy)2BH 2-HOOH/NaOH",
+                    "1-O3 2-Zn/H2O",
+                    "K2Cr2O7 H2SO4 H2O",
+                    "PCC or PDC",
+                    "1-DMSO ClCOCOCl 2-(Et)3N",
+                    "TEMPO KBr NaOCl NaHCO3",
+                    "Fe(NO3)3·9H2O TEMPO KCl O2"
+                ],
+                rows: [
+                    "Alkene",
+                    "Alkyne",
+                    "1° Alcohol",
+                    "2° Alcohol",
+                    "3° Alcohol",
+                    "Aldehyde"
+                ],
+                grid: {
+                    "Alkene": {
+                        "H2SO4/H2O": "alcohol",
+                        "1-Hg(OAc)2 THF/H2O 2-NaBH4": "alcohol",
+                        "1-BH3 THF 2-HOOH/NaOH": "alcohol",
+                        "H2SO4/HgSO4/H2O": "--",
+                        "1-(Cy)2BH 2-HOOH/NaOH": "--",
+                        "1-O3 2-Zn/H2O": "aldehydes and ketones",
+                        "K2Cr2O7 H2SO4 H2O": "--",
+                        "PCC or PDC": "No Reaction",
+                        "1-DMSO ClCOCOCl 2-(Et)3N": "No Reaction",
+                        "TEMPO KBr NaOCl NaHCO3": "No Reaction",
+                        "Fe(NO3)3·9H2O TEMPO KCl O2": "No Reaction"
+                    },
+                    "Alkyne": {
+                        "H2SO4/H2O": "ketone",
+                        "1-Hg(OAc)2 THF/H2O 2-NaBH4": "ketone",
+                        "1-BH3 THF 2-HOOH/NaOH": "aldehyde",
+                        "H2SO4/HgSO4/H2O": "ketone",
+                        "1-(Cy)2BH 2-HOOH/NaOH": "aldehyde",
+                        "1-O3 2-Zn/H2O": "carboxylic acids",
+                        "K2Cr2O7 H2SO4 H2O": "--",
+                        "PCC or PDC": "No Reaction",
+                        "1-DMSO ClCOCOCl 2-(Et)3N": "No Reaction",
+                        "TEMPO KBr NaOCl NaHCO3": "No Reaction",
+                        "Fe(NO3)3·9H2O TEMPO KCl O2": "No Reaction"
+                    },
+                    "1° Alcohol": {
+                        "H2SO4/H2O": "alkene",
+                        "1-Hg(OAc)2 THF/H2O 2-NaBH4": "No Reaction",
+                        "1-BH3 THF 2-HOOH/NaOH": "No Reaction",
+                        "H2SO4/HgSO4/H2O": "No Reaction",
+                        "1-(Cy)2BH 2-HOOH/NaOH": "No Reaction",
+                        "1-O3 2-Zn/H2O": "No Reaction",
+                        "K2Cr2O7 H2SO4 H2O": "carboxylic acid",
+                        "PCC or PDC": "aldehyde",
+                        "1-DMSO ClCOCOCl 2-(Et)3N": "aldehyde",
+                        "TEMPO KBr NaOCl NaHCO3": "aldehyde",
+                        "Fe(NO3)3·9H2O TEMPO KCl O2": "aldehyde"
+                    },
+                    "2° Alcohol": {
+                        "H2SO4/H2O": "alkene",
+                        "1-Hg(OAc)2 THF/H2O 2-NaBH4": "No Reaction",
+                        "1-BH3 THF 2-HOOH/NaOH": "No Reaction",
+                        "H2SO4/HgSO4/H2O": "No Reaction",
+                        "1-(Cy)2BH 2-HOOH/NaOH": "No Reaction",
+                        "1-O3 2-Zn/H2O": "No Reaction",
+                        "K2Cr2O7 H2SO4 H2O": "ketone",
+                        "PCC or PDC": "ketone",
+                        "1-DMSO ClCOCOCl 2-(Et)3N": "ketone",
+                        "TEMPO KBr NaOCl NaHCO3": "ketone",
+                        "Fe(NO3)3·9H2O TEMPO KCl O2": "ketone"
+                    },
+                    "3° Alcohol": {
+                        "H2SO4/H2O": "alkene",
+                        "1-Hg(OAc)2 THF/H2O 2-NaBH4": "No Reaction",
+                        "1-BH3 THF 2-HOOH/NaOH": "No Reaction",
+                        "H2SO4/HgSO4/H2O": "No Reaction",
+                        "1-(Cy)2BH 2-HOOH/NaOH": "No Reaction",
+                        "1-O3 2-Zn/H2O": "No Reaction",
+                        "K2Cr2O7 H2SO4 H2O": "No Reaction",
+                        "PCC or PDC": "No Reaction",
+                        "1-DMSO ClCOCOCl 2-(Et)3N": "No Reaction",
+                        "TEMPO KBr NaOCl NaHCO3": "No Reaction",
+                        "Fe(NO3)3·9H2O TEMPO KCl O2": "No Reaction"
+                    },
+                    "Aldehyde": {
+                        "H2SO4/H2O": "--",
+                        "1-Hg(OAc)2 THF/H2O 2-NaBH4": "--",
+                        "1-BH3 THF 2-HOOH/NaOH": "--",
+                        "H2SO4/HgSO4/H2O": "--",
+                        "1-(Cy)2BH 2-HOOH/NaOH": "--",
+                        "1-O3 2-Zn/H2O": "--",
+                        "K2Cr2O7 H2SO4 H2O": "carboxylic acid",
+                        "PCC or PDC": "No Reaction",
+                        "1-DMSO ClCOCOCl 2-(Et)3N": "No Reaction",
+                        "TEMPO KBr NaOCl NaHCO3": "carboxylic acid",
+                        "Fe(NO3)3·9H2O TEMPO KCl O2": "carboxylic acid"
+                    }
+                }
+            },
+            "reduction": {
+                id: "reduction",
+                title: "Reduction Methods of Various Functional Groups",
+                description: "Exact reduction matrix mapping 10 functional groups across 7 major reducing reagents.",
+                builtin: true,
+                columns: [
+                    "H2 Metal Catalyst",
+                    "H2 Lindlar's Catalyst",
+                    "Na NH3",
+                    "NaBH4",
+                    "LiAlH4",
+                    "Zn(Hg) HCl",
+                    "H2NNH2, KOH, hot"
+                ],
+                rows: [
+                    "Alkene",
+                    "Alkyne",
+                    "Nitro",
+                    "Nitrile",
+                    "Azide",
+                    "Aldehyde",
+                    "Ketone",
+                    "Carboxylic Acid",
+                    "Ester",
+                    "Amide"
+                ],
+                grid: {
+                    "Alkene": {
+                        "H2 Metal Catalyst": "alkane",
+                        "H2 Lindlar's Catalyst": "No Reaction",
+                        "Na NH3": "No Reaction",
+                        "NaBH4": "No Reaction",
+                        "LiAlH4": "No Reaction",
+                        "Zn(Hg) HCl": "No Reaction",
+                        "H2NNH2, KOH, hot": "No Reaction"
+                    },
+                    "Alkyne": {
+                        "H2 Metal Catalyst": "alkane",
+                        "H2 Lindlar's Catalyst": "cis-alkene",
+                        "Na NH3": "trans-alkene",
+                        "NaBH4": "No Reaction",
+                        "LiAlH4": "No Reaction",
+                        "Zn(Hg) HCl": "No Reaction",
+                        "H2NNH2, KOH, hot": "No Reaction"
+                    },
+                    "Nitro": {
+                        "H2 Metal Catalyst": "amine",
+                        "H2 Lindlar's Catalyst": "No Reaction",
+                        "Na NH3": "No Reaction",
+                        "NaBH4": "No Reaction",
+                        "LiAlH4": "amine",
+                        "Zn(Hg) HCl": "amine",
+                        "H2NNH2, KOH, hot": "No Reaction"
+                    },
+                    "Nitrile": {
+                        "H2 Metal Catalyst": "amine",
+                        "H2 Lindlar's Catalyst": "No Reaction",
+                        "Na NH3": "No Reaction",
+                        "NaBH4": "No Reaction",
+                        "LiAlH4": "amine",
+                        "Zn(Hg) HCl": "No Reaction",
+                        "H2NNH2, KOH, hot": "No Reaction"
+                    },
+                    "Azide": {
+                        "H2 Metal Catalyst": "amine",
+                        "H2 Lindlar's Catalyst": "No Reaction",
+                        "Na NH3": "No Reaction",
+                        "NaBH4": "No Reaction",
+                        "LiAlH4": "amine",
+                        "Zn(Hg) HCl": "No Reaction",
+                        "H2NNH2, KOH, hot": "No Reaction"
+                    },
+                    "Aldehyde": {
+                        "H2 Metal Catalyst": "alcohol",
+                        "H2 Lindlar's Catalyst": "No Reaction",
+                        "Na NH3": "No Reaction",
+                        "NaBH4": "alcohol",
+                        "LiAlH4": "alcohol",
+                        "Zn(Hg) HCl": "alkane",
+                        "H2NNH2, KOH, hot": "alkane"
+                    },
+                    "Ketone": {
+                        "H2 Metal Catalyst": "alcohol",
+                        "H2 Lindlar's Catalyst": "No Reaction",
+                        "Na NH3": "No Reaction",
+                        "NaBH4": "alcohol",
+                        "LiAlH4": "alcohol",
+                        "Zn(Hg) HCl": "alkane",
+                        "H2NNH2, KOH, hot": "alkane"
+                    },
+                    "Carboxylic Acid": {
+                        "H2 Metal Catalyst": "No Reaction",
+                        "H2 Lindlar's Catalyst": "No Reaction",
+                        "Na NH3": "No Reaction",
+                        "NaBH4": "No Reaction",
+                        "LiAlH4": "alcohol",
+                        "Zn(Hg) HCl": "No Reaction",
+                        "H2NNH2, KOH, hot": "No Reaction"
+                    },
+                    "Ester": {
+                        "H2 Metal Catalyst": "No Reaction",
+                        "H2 Lindlar's Catalyst": "No Reaction",
+                        "Na NH3": "No Reaction",
+                        "NaBH4": "No Reaction",
+                        "LiAlH4": "alcohol",
+                        "Zn(Hg) HCl": "No Reaction",
+                        "H2NNH2, KOH, hot": "No Reaction"
+                    },
+                    "Amide": {
+                        "H2 Metal Catalyst": "No Reaction",
+                        "H2 Lindlar's Catalyst": "No Reaction",
+                        "Na NH3": "No Reaction",
+                        "NaBH4": "No Reaction",
+                        "LiAlH4": "amine",
+                        "Zn(Hg) HCl": "No Reaction",
+                        "H2NNH2, KOH, hot": "No Reaction"
+                    }
+                }
+            }
+        };
+
+        // ==========================================
+        // 2. STATE MANAGEMENT
+        // ==========================================
+
+        let customDecks = {};
+        let currentDeckId = "reduction";
+        let activeDeck = BUILTIN_DECKS["reduction"];
+        let currentMode = "matrix";
+
+        // Flashcards state
+        let fcList = [];
+        let fcIndex = 0;
+        let fcFlipped = false;
+        let fcMastered = new Set();
+
+        // MCQ State
+        let mcqQuestions = [];
+        let mcqIndex = 0;
+        let mcqStreak = 0;
+        let mcqScore = 0;
+        let mcqTotal = 0;
+
+        // Recall State
+        let recallQuestions = [];
+        let recallIndex = 0;
+        let recallScore = 0;
+        let recallTotal = 0;
+
+        // Custom Deck Builder Temp State
+        let tempCustomCols = [];
+        let tempCustomRows = [];
+        let editingDeckId = null;
+
+        // ==========================================
+        // 3. INITIALIZATION & LOCAL STORAGE
+        // ==========================================
+
+        window.onload = function() {
+            loadCustomDecksFromStorage();
+            populateDeckSelector();
+            switchDeck(currentDeckId);
+        };
+
+        function loadCustomDecksFromStorage() {
+            try {
+                const stored = localStorage.getItem("chemforge_custom_decks");
+                if (stored) {
+                    customDecks = JSON.parse(stored);
+                }
+            } catch (e) {
+                console.error("Failed to load custom decks:", e);
+                customDecks = {};
+            }
+        }
+
+        function saveCustomDecksToStorage() {
+            try {
+                localStorage.setItem("chemforge_custom_decks", JSON.stringify(customDecks));
+            } catch (e) {
+                console.error("Failed to save custom decks:", e);
+            }
+        }
+
+        function getAllDecks() {
+            return { ...BUILTIN_DECKS, ...customDecks };
+        }
+
+        function populateDeckSelector() {
+            const select = document.getElementById("deckSelector");
+            select.innerHTML = "";
+
+            const all = getAllDecks();
+            
+            // Built-in group
+            const optgroupBuiltin = document.createElement("optgroup");
+            optgroupBuiltin.label = "Pre-loaded Reference Charts";
+
+            // Custom group
+            const optgroupCustom = document.createElement("optgroup");
+            optgroupCustom.label = "My Custom Decks";
+
+            Object.values(all).forEach(deck => {
+                const opt = document.createElement("option");
+                opt.value = deck.id;
+                opt.textContent = deck.title;
+                if (deck.id === currentDeckId) opt.selected = true;
+
+                if (deck.builtin) {
+                    optgroupBuiltin.appendChild(opt);
+                } else {
+                    optgroupCustom.appendChild(opt);
+                }
+            });
+
+            select.appendChild(optgroupBuiltin);
+            if (optgroupCustom.children.length > 0) {
+                select.appendChild(optgroupCustom);
+            }
+        }
+
+        function switchDeck(deckId) {
+            const all = getAllDecks();
+            if (!all[deckId]) deckId = "reduction";
+
+            currentDeckId = deckId;
+            activeDeck = all[deckId];
+
+            // Update Header Banner
+            document.getElementById("deckTitle").textContent = activeDeck.title;
+            document.getElementById("deckDescription").textContent = activeDeck.description || "Interactive reaction reference chart.";
+            document.getElementById("deckBadge").textContent = activeDeck.builtin ? "Built-in Deck" : "Custom Deck";
+            document.getElementById("deckBadge").className = activeDeck.builtin 
+                ? "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                : "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-400 border border-cyan-500/30";
+            
+            const totalCells = activeDeck.rows.length * activeDeck.columns.length;
+            document.getElementById("deckSizeBadge").textContent = `${activeDeck.rows.length} Substrates | ${activeDeck.columns.length} Reagents`;
+            document.getElementById("totalReactionsCount").textContent = totalCells;
+
+            // Flatten items list for quizzes & flashcards
+            flattenDeckItems();
+
+            // Render current active mode
+            renderActiveMode();
+        }
+
+        function flattenDeckItems() {
+            fcList = [];
+            activeDeck.rows.forEach(row => {
+                activeDeck.columns.forEach(col => {
+                    const outcome = (activeDeck.grid[row] && activeDeck.grid[row][col]) ? activeDeck.grid[row][col] : "No Reaction";
+                    fcList.push({
+                        substrate: row,
+                        reagent: col,
+                        outcome: outcome
+                    });
+                });
+            });
+
+            // Shuffle copy for flashcards / quizzes
+            mcqQuestions = [...fcList].sort(() => Math.random() - 0.5);
+            recallQuestions = [...fcList].sort(() => Math.random() - 0.5);
+            
+            fcIndex = 0;
+            fcMastered.clear();
+            mcqIndex = 0;
+            recallIndex = 0;
+        }
+
+        // ==========================================
+        // 4. MODE SWITCHER & RENDERING
+        // ==========================================
+
+        function switchMode(mode) {
+            currentMode = mode;
+
+            // Highlight tab button
+            document.querySelectorAll(".mode-tab").forEach(tab => {
+                tab.className = "mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition flex items-center gap-2 whitespace-nowrap";
+            });
+
+            const activeTab = document.getElementById(`tab-${mode}`);
+            if (activeTab) {
+                activeTab.className = "mode-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap bg-emerald-500 text-slate-950 font-bold shadow-md";
+            }
+
+            // Hide all view sections
+            document.querySelectorAll(".mode-view").forEach(view => view.classList.add("hidden"));
+
+            // Show active view
+            const activeView = document.getElementById(`view-${mode}`);
+            if (activeView) activeView.classList.remove("hidden");
+
+            renderActiveMode();
+        }
+
+        function renderActiveMode() {
+            if (currentMode === "matrix") renderMatrixTable();
+            else if (currentMode === "flashcards") renderFlashcards();
+            else if (currentMode === "mcq") renderMcqQuestion();
+            else if (currentMode === "recall") renderRecallQuestion();
+            else if (currentMode === "exam") renderExamGrid();
+        }
+
+        // ==========================================
+        // MODE 1: MATRIX TABLE
+        // ==========================================
+
+        function renderMatrixTable() {
+            const headerRow = document.getElementById("matrixHeaderRow");
+            const tbody = document.getElementById("matrixBody");
+
+            // Build Headers
+            headerRow.innerHTML = `<th class="p-4 min-w-[160px] bg-slate-950/90 border-r border-slate-800 sticky left-0 z-30">Functional Group</th>`;
+            activeDeck.columns.forEach(col => {
+                headerRow.innerHTML += `<th class="p-3 text-center min-w-[140px] font-semibold text-cyan-300 code-font border-r border-slate-800/60">${col}</th>`;
+            });
+
+            // Build Rows
+            tbody.innerHTML = "";
+            activeDeck.rows.forEach(row => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-800/30 transition";
+
+                // Substrate header
+                let rowHtml = `<td class="p-3 font-bold text-white bg-slate-900/90 border-r border-slate-800 sticky left-0 z-10">${row}</td>`;
+
+                activeDeck.columns.forEach(col => {
+                    const outcome = (activeDeck.grid[row] && activeDeck.grid[row][col]) ? activeDeck.grid[row][col] : "--";
+                    const badgeClass = getOutcomeBadgeStyle(outcome);
+
+                    rowHtml += `
+                        <td class="p-2 border-r border-slate-800/60 text-center">
+                            <button onclick="openCellDetail('${escapeQuotes(row)}', '${escapeQuotes(col)}', '${escapeQuotes(outcome)}')" 
+                                    class="w-full h-full py-2 px-2.5 rounded-lg text-xs font-bold transition transform hover:scale-105 ${badgeClass}">
+                                ${outcome}
+                            </button>
+                        </td>
+                    `;
+                });
+
+                tr.innerHTML = rowHtml;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function getOutcomeBadgeStyle(outcome) {
+            const lower = outcome.toLowerCase().trim();
+            if (lower === "no reaction" || lower === "no rxn" || lower === "none") {
+                return "bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20";
+            } else if (lower === "--" || lower === "n/a" || lower === "not applicable") {
+                return "bg-slate-800/60 text-slate-500 border border-slate-700/50 hover:bg-slate-800";
+            } else {
+                return "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25";
+            }
+        }
+
+        function filterMatrixTable() {
+            const query = document.getElementById("matrixSearch").value.toLowerCase();
+            const rows = document.querySelectorAll("#matrixBody tr");
+
+            rows.forEach(tr => {
+                const text = tr.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    tr.style.display = "";
+                } else {
+                    tr.style.display = "none";
+                }
+            });
+        }
+
+        function openCellDetail(sub, reg, outcome) {
+            document.getElementById("modalSubstrate").textContent = sub;
+            document.getElementById("modalReagent").textContent = reg;
+            
+            const badge = document.getElementById("modalProductBadge");
+            badge.textContent = outcome;
+            badge.className = `mt-1 inline-block px-3.5 py-1.5 rounded-lg text-xs font-bold ${getOutcomeBadgeStyle(outcome)}`;
+
+            document.getElementById("detailModal").classList.remove("hidden");
+        }
+
+        function closeDetailModal() {
+            document.getElementById("detailModal").classList.add("hidden");
+        }
+
+        // ==========================================
+        // MODE 2: 3D FLASHCARDS
+        // ==========================================
+
+        function renderFlashcards() {
+            if (fcList.length === 0) return;
+
+            const current = fcList[fcIndex];
+            document.getElementById("fcSubstrate").textContent = current.substrate;
+            document.getElementById("fcReagent").textContent = current.reagent;
+            document.getElementById("fcProduct").textContent = current.outcome;
+
+            document.getElementById("fcProgress").textContent = `Card ${fcIndex + 1} of ${fcList.length}`;
+            document.getElementById("fcMasteredCount").innerHTML = `<i class="fa-solid fa-circle-check"></i> ${fcMastered.size} Mastered`;
+
+            const percent = ((fcIndex + 1) / fcList.length) * 100;
+            document.getElementById("fcProgressBar").style.width = `${percent}%`;
+
+            // Reset flip state
+            fcFlipped = false;
+            document.getElementById("flashcardInner").classList.remove("rotate-y-180");
+        }
+
+        function flipFlashcard() {
+            fcFlipped = !fcFlipped;
+            const inner = document.getElementById("flashcardInner");
+            if (fcFlipped) {
+                inner.classList.add("rotate-y-180");
+            } else {
+                inner.classList.remove("rotate-y-180");
+            }
+        }
+
+        function nextFlashcard() {
+            fcIndex = (fcIndex + 1) % fcList.length;
+            renderFlashcards();
+        }
+
+        function prevFlashcard() {
+            fcIndex = (fcIndex - 1 + fcList.length) % fcList.length;
+            renderFlashcards();
+        }
+
+        function shuffleFlashcards() {
+            fcList.sort(() => Math.random() - 0.5);
+            fcIndex = 0;
+            renderFlashcards();
+        }
+
+        function markFlashcardMastered() {
+            fcMastered.add(fcIndex);
+            nextFlashcard();
+        }
+
+        // ==========================================
+        // MODE 3: MULTIPLE CHOICE QUIZ
+        // ==========================================
+
+        function renderMcqQuestion() {
+            if (mcqQuestions.length === 0) return;
+            if (mcqIndex >= mcqQuestions.length) {
+                mcqIndex = 0;
+                mcqQuestions.sort(() => Math.random() - 0.5);
+            }
+
+            const current = mcqQuestions[mcqIndex];
+            document.getElementById("mcqSubstrate").textContent = current.substrate;
+            document.getElementById("mcqReagent").textContent = current.reagent;
+            document.getElementById("mcqStreak").textContent = mcqStreak;
+            document.getElementById("mcqScore").textContent = `Score: ${mcqScore} / ${mcqTotal}`;
+
+            // Reset feedback & next button
+            document.getElementById("mcqFeedback").classList.add("hidden");
+            document.getElementById("mcqNextBtn").classList.add("hidden");
+
+            // Distractors: gather all distinct outcomes in this deck
+            const allOutcomes = Array.from(new Set(fcList.map(item => item.outcome)));
+            let options = [current.outcome];
+
+            // Fill with random distinct options
+            while (options.length < Math.min(4, allOutcomes.length)) {
+                const rand = allOutcomes[Math.floor(Math.random() * allOutcomes.length)];
+                if (!options.includes(rand)) {
+                    options.push(rand);
+                }
+            }
+
+            // Shuffle options
+            options.sort(() => Math.random() - 0.5);
+
+            const optionsContainer = document.getElementById("mcqOptions");
+            optionsContainer.innerHTML = "";
+
+            options.forEach(opt => {
+                const btn = document.createElement("button");
+                btn.className = "mcq-opt-btn w-full p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-emerald-500/50 hover:bg-slate-800 text-slate-200 font-bold text-sm text-center transition";
+                btn.textContent = opt;
+                btn.onclick = () => checkMcqAnswer(btn, opt, current.outcome);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkMcqAnswer(btn, selected, correct) {
+            // Disable all buttons
+            const btns = document.querySelectorAll(".mcq-opt-btn");
+            btns.forEach(b => b.disabled = true);
+
+            mcqTotal++;
+            const feedback = document.getElementById("mcqFeedback");
+            feedback.classList.remove("hidden");
+
+            if (selected === correct) {
+                mcqScore++;
+                mcqStreak++;
+                btn.className = "mcq-opt-btn w-full p-4 rounded-xl bg-emerald-500/20 border-2 border-emerald-500 text-emerald-300 font-extrabold text-sm text-center shadow-lg";
+                feedback.className = "rounded-xl p-4 text-center text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> Correct! <strong>${correct}</strong> is the expected outcome.`;
+            } else {
+                mcqStreak = 0;
+                btn.className = "mcq-opt-btn w-full p-4 rounded-xl bg-rose-500/20 border-2 border-rose-500 text-rose-300 font-bold text-sm text-center";
+                
+                // Highlight correct button
+                btns.forEach(b => {
+                    if (b.textContent === correct) {
+                        b.className = "mcq-opt-btn w-full p-4 rounded-xl bg-emerald-500/20 border-2 border-emerald-500 text-emerald-300 font-bold text-sm text-center";
+                    }
+                });
+
+                feedback.className = "rounded-xl p-4 text-center text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400 mr-1"></i> Incorrect. Expected: <strong>${correct}</strong>.`;
+            }
+
+            document.getElementById("mcqStreak").textContent = mcqStreak;
+            document.getElementById("mcqScore").textContent = `Score: ${mcqScore} / ${mcqTotal}`;
+            document.getElementById("mcqNextBtn").classList.remove("hidden");
+        }
+
+        function nextMcqQuestion() {
+            mcqIndex++;
+            renderMcqQuestion();
+        }
+
+        // ==========================================
+        // MODE 4: FREE RECALL / TYPE QUIZ
+        // ==========================================
+
+        function renderRecallQuestion() {
+            if (recallQuestions.length === 0) return;
+            if (recallIndex >= recallQuestions.length) {
+                recallIndex = 0;
+                recallQuestions.sort(() => Math.random() - 0.5);
+            }
+
+            const current = recallQuestions[recallIndex];
+            document.getElementById("recallSubstrate").textContent = current.substrate;
+            document.getElementById("recallReagent").textContent = current.reagent;
+            document.getElementById("recallScore").textContent = `Score: ${recallScore} / ${recallTotal}`;
+
+            // Reset input, feedback, hint
+            const input = document.getElementById("recallInput");
+            input.value = "";
+            input.disabled = false;
+            document.getElementById("recallHintText").classList.add("hidden");
+            document.getElementById("recallFeedback").classList.add("hidden");
+            document.getElementById("recallNextBtn").classList.add("hidden");
+
+            // Populate quick helper pills
+            const pillsContainer = document.getElementById("recallHelperPills");
+            pillsContainer.innerHTML = "";
+            
+            const uniqueOutcomes = Array.from(new Set(fcList.map(item => item.outcome)));
+            uniqueOutcomes.forEach(out => {
+                const pill = document.createElement("button");
+                pill.type = "button";
+                pill.className = "px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 rounded-lg text-[11px] font-semibold border border-slate-800 transition";
+                pill.textContent = out;
+                pill.onclick = () => {
+                    input.value = out;
+                };
+                pillsContainer.appendChild(pill);
+            });
+        }
+
+        function showRecallHint() {
+            if (recallQuestions.length === 0) return;
+            const current = recallQuestions[recallIndex];
+            const answer = current.outcome;
+            const hint = `Starts with "${answer.charAt(0).toUpperCase()}" (${answer.length} letters/chars)`;
+            const hintElem = document.getElementById("recallHintText");
+            hintElem.textContent = hint;
+            hintElem.classList.remove("hidden");
+        }
+
+        function submitRecallAnswer(event) {
+            event.preventDefault();
+            const input = document.getElementById("recallInput");
+            if (!input.value.trim()) return;
+
+            const current = recallQuestions[recallIndex];
+            const userAns = normalizeAnswer(input.value);
+            const expectedAns = normalizeAnswer(current.outcome);
+
+            recallTotal++;
+            input.disabled = true;
+
+            const feedback = document.getElementById("recallFeedback");
+            feedback.classList.remove("hidden");
+
+            if (userAns === expectedAns) {
+                recallScore++;
+                feedback.className = "rounded-xl p-4 text-center text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> Excellent! Exact match: <strong>${current.outcome}</strong>.`;
+            } else {
+                feedback.className = "rounded-xl p-4 text-center text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400 mr-1"></i> Incorrect. Expected outcome: <strong>${current.outcome}</strong>.`;
+            }
+
+            document.getElementById("recallScore").textContent = `Score: ${recallScore} / ${recallTotal}`;
+            document.getElementById("recallNextBtn").classList.remove("hidden");
+        }
+
+        function normalizeAnswer(str) {
+            let s = str.toLowerCase().trim();
+            s = s.replace(/[^a-z0-9\-]/g, ""); // strip whitespace & special chars except dash
+            if (s === "nr" || s === "norx" || s === "noreaction" || s === "none") return "noreaction";
+            if (s === "na" || s === "notapplicable" || s === "--") return "--";
+            return s;
+        }
+
+        function nextRecallQuestion() {
+            recallIndex++;
+            renderRecallQuestion();
+        }
+
+        // ==========================================
+        // MODE 5: FULL GRID EXAM CHALLENGE
+        // ==========================================
+
+        function renderExamGrid() {
+            const headerRow = document.getElementById("examHeaderRow");
+            const tbody = document.getElementById("examBody");
+
+            // Hide grade card on render
+            document.getElementById("examResultCard").classList.add("hidden");
+
+            // Build Headers
+            headerRow.innerHTML = `<th class="p-4 min-w-[160px] bg-slate-950/90 border-r border-slate-800 sticky left-0 z-30">Functional Group</th>`;
+            activeDeck.columns.forEach(col => {
+                headerRow.innerHTML += `<th class="p-3 text-center min-w-[140px] font-semibold text-cyan-300 code-font border-r border-slate-800/60">${col}</th>`;
+            });
+
+            // Build Rows
+            tbody.innerHTML = "";
+            activeDeck.rows.forEach(row => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-800/30 transition";
+
+                let rowHtml = `<td class="p-3 font-bold text-white bg-slate-900/90 border-r border-slate-800 sticky left-0 z-10">${row}</td>`;
+
+                activeDeck.columns.forEach(col => {
+                    rowHtml += `
+                        <td class="p-2 border-r border-slate-800/60 text-center">
+                            <input type="text" 
+                                data-substrate="${escapeQuotes(row)}" 
+                                data-reagent="${escapeQuotes(col)}" 
+                                placeholder="Type answer..." 
+                                class="exam-cell w-full bg-slate-950 text-slate-200 text-xs font-semibold rounded-lg px-2 py-2 border border-slate-700/80 focus:outline-none focus:border-emerald-500 text-center">
+                        </td>
+                    `;
+                });
+
+                tr.innerHTML = rowHtml;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function resetExamGrid() {
+            const inputs = document.querySelectorAll(".exam-cell");
+            inputs.forEach(input => {
+                input.value = "";
+                input.className = "exam-cell w-full bg-slate-950 text-slate-200 text-xs font-semibold rounded-lg px-2 py-2 border border-slate-700/80 focus:outline-none focus:border-emerald-500 text-center";
+                input.disabled = false;
+            });
+            document.getElementById("examResultCard").classList.add("hidden");
+        }
+
+        function gradeExamGrid() {
+            const inputs = document.querySelectorAll(".exam-cell");
+            let correctCount = 0;
+            let totalCells = inputs.length;
+
+            inputs.forEach(input => {
+                const row = input.getAttribute("data-substrate");
+                const col = input.getAttribute("data-reagent");
+                const expected = (activeDeck.grid[row] && activeDeck.grid[row][col]) ? activeDeck.grid[row][col] : "No Reaction";
+
+                const userVal = normalizeAnswer(input.value);
+                const expectedVal = normalizeAnswer(expected);
+
+                input.disabled = true;
+
+                if (userVal === expectedVal) {
+                    correctCount++;
+                    input.className = "exam-cell w-full bg-emerald-500/20 text-emerald-300 font-extrabold text-xs rounded-lg px-2 py-2 border border-emerald-500/50 text-center";
+                } else {
+                    input.className = "exam-cell w-full bg-rose-500/20 text-rose-300 font-extrabold text-xs rounded-lg px-2 py-2 border border-rose-500/50 text-center";
+                    input.value = `${input.value ? input.value : '[Empty]'} ➔ (${expected})`;
+                }
+            });
+
+            const percent = totalCells > 0 ? Math.round((correctCount / totalCells) * 100) : 0;
+            let grade = "F";
+            let feedback = "Needs more review. Try flashcards mode first!";
+
+            if (percent >= 97) { grade = "A+"; feedback = "Flawless chemistry mastery!"; }
+            else if (percent >= 90) { grade = "A"; feedback = "Excellent understanding of reaction mechanisms!"; }
+            else if (percent >= 80) { grade = "B"; feedback = "Good solid performance!"; }
+            else if (percent >= 70) { grade = "C"; feedback = "Passable, but keep practicing troublesome reagents."; }
+            else if (percent >= 60) { grade = "D"; feedback = "Review the matrix chart and re-test."; }
+
+            document.getElementById("examGradeCircle").textContent = grade;
+            document.getElementById("examScoreText").textContent = `You scored ${correctCount} out of ${totalCells} (${percent}%)`;
+            document.getElementById("examFeedbackText").textContent = feedback;
+            document.getElementById("examResultCard").classList.remove("hidden");
+        }
+
+        // ==========================================
+        // CUSTOM DECK CREATOR & MANAGEMENT
+        // ==========================================
+
+        function openDeckModal(deckToEdit = null) {
+            editingDeckId = deckToEdit ? deckToEdit.id : null;
+
+            if (deckToEdit) {
+                document.getElementById("deckModalTitle").innerHTML = `<i class="fa-solid fa-pen-to-square text-emerald-400"></i> Edit Custom Chart`;
+                document.getElementById("customTitle").value = deckToEdit.title;
+                document.getElementById("customDesc").value = deckToEdit.description || "";
+                tempCustomCols = [...deckToEdit.columns];
+                tempCustomRows = [...deckToEdit.rows];
+            } else {
+                document.getElementById("deckModalTitle").innerHTML = `<i class="fa-solid fa-pen-to-square text-emerald-400"></i> Create Custom Reaction Chart`;
+                document.getElementById("customTitle").value = "";
+                document.getElementById("customDesc").value = "";
+                tempCustomCols = ["Reagent A", "Reagent B"];
+                tempCustomRows = ["Substrate 1", "Substrate 2"];
+            }
+
+            renderCustomModalColsRows();
+            renderCustomModalMatrix(deckToEdit ? deckToEdit.grid : null);
+            document.getElementById("deckModal").classList.remove("hidden");
+        }
+
+        function closeDeckModal() {
+            document.getElementById("deckModal").classList.add("hidden");
+        }
+
+        function renderCustomModalColsRows() {
+            // Render Cols inputs
+            const colsContainer = document.getElementById("customColsContainer");
+            colsContainer.innerHTML = "";
+            tempCustomCols.forEach((col, idx) => {
+                const tag = document.createElement("div");
+                tag.className = "flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-lg p-1.5";
+                tag.innerHTML = `
+                    <input type="text" value="${escapeQuotes(col)}" onchange="updateCustomColName(${idx}, this.value)" class="bg-transparent text-xs font-semibold text-cyan-300 w-28 focus:outline-none">
+                    <button type="button" onclick="removeCustomCol(${idx})" class="text-slate-500 hover:text-rose-400 px-1"><i class="fa-solid fa-xmark"></i></button>
+                `;
+                colsContainer.appendChild(tag);
+            });
+
+            // Render Rows inputs
+            const rowsContainer = document.getElementById("customRowsContainer");
+            rowsContainer.innerHTML = "";
+            tempCustomRows.forEach((row, idx) => {
+                const tag = document.createElement("div");
+                tag.className = "flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-lg p-1.5";
+                tag.innerHTML = `
+                    <input type="text" value="${escapeQuotes(row)}" onchange="updateCustomRowName(${idx}, this.value)" class="bg-transparent text-xs font-bold text-white w-28 focus:outline-none">
+                    <button type="button" onclick="removeCustomRow(${idx})" class="text-slate-500 hover:text-rose-400 px-1"><i class="fa-solid fa-xmark"></i></button>
+                `;
+                rowsContainer.appendChild(tag);
+            });
+        }
+
+        function addCustomColumn() {
+            tempCustomCols.push(`Reagent ${tempCustomCols.length + 1}`);
+            renderCustomModalColsRows();
+            renderCustomModalMatrix();
+        }
+
+        function removeCustomCol(idx) {
+            if (tempCustomCols.length <= 1) return;
+            tempCustomCols.splice(idx, 1);
+            renderCustomModalColsRows();
+            renderCustomModalMatrix();
+        }
+
+        function updateCustomColName(idx, val) {
+            tempCustomCols[idx] = val || `Reagent ${idx+1}`;
+            renderCustomModalMatrix();
+        }
+
+        function addCustomRow() {
+            tempCustomRows.push(`Substrate ${tempCustomRows.length + 1}`);
+            renderCustomModalColsRows();
+            renderCustomModalMatrix();
+        }
+
+        function removeCustomRow(idx) {
+            if (tempCustomRows.length <= 1) return;
+            tempCustomRows.splice(idx, 1);
+            renderCustomModalColsRows();
+            renderCustomModalMatrix();
+        }
+
+        function updateCustomRowName(idx, val) {
+            tempCustomRows[idx] = val || `Substrate ${idx+1}`;
+            renderCustomModalMatrix();
+        }
+
+        function renderCustomModalMatrix(existingGrid = null) {
+            const header = document.getElementById("customGridHeader");
+            const body = document.getElementById("customGridBody");
+
+            header.innerHTML = `<th class="p-2 border-r border-slate-800">Substrate</th>`;
+            tempCustomCols.forEach(col => {
+                header.innerHTML += `<th class="p-2 border-r border-slate-800 text-center font-bold text-cyan-300 code-font">${col}</th>`;
+            });
+
+            body.innerHTML = "";
+            tempCustomRows.forEach(row => {
+                const tr = document.createElement("tr");
+                let rowHtml = `<td class="p-2 border-r border-slate-800 font-bold text-white">${row}</td>`;
+
+                tempCustomCols.forEach(col => {
+                    const defaultVal = (existingGrid && existingGrid[row] && existingGrid[row][col]) ? existingGrid[row][col] : "";
+                    rowHtml += `
+                        <td class="p-1 border-r border-slate-800 text-center">
+                            <input type="text" data-custom-row="${escapeQuotes(row)}" data-custom-col="${escapeQuotes(col)}" value="${escapeQuotes(defaultVal)}" placeholder="Outcome..." class="custom-matrix-cell w-full bg-slate-950 text-emerald-400 font-bold text-xs rounded p-1 border border-slate-800 text-center focus:outline-none focus:border-emerald-500">
+                        </td>
+                    `;
+                });
+
+                tr.innerHTML = rowHtml;
+                body.appendChild(tr);
+            });
+        }
+
+        function fillBlanksNoReaction() {
+            document.querySelectorAll(".custom-matrix-cell").forEach(cell => {
+                if (!cell.value.trim()) {
+                    cell.value = "No Reaction";
+                }
+            });
+        }
+
+        function saveCustomDeck() {
+            const title = document.getElementById("customTitle").value.trim() || "Untitled Custom Chart";
+            const desc = document.getElementById("customDesc").value.trim() || "Custom reaction deck created by user.";
+
+            const id = editingDeckId || ("custom_" + Date.now());
+
+            // Build Grid
+            const grid = {};
+            tempCustomRows.forEach(row => {
+                grid[row] = {};
+            });
+
+            document.querySelectorAll(".custom-matrix-cell").forEach(cell => {
+                const row = cell.getAttribute("data-custom-row");
+                const col = cell.getAttribute("data-custom-col");
+                if (grid[row]) {
+                    grid[row][col] = cell.value.trim() || "No Reaction";
+                }
+            });
+
+            const deckObj = {
+                id: id,
+                title: title,
+                description: desc,
+                builtin: false,
+                columns: [...tempCustomCols],
+                rows: [...tempCustomRows],
+                grid: grid
+            };
+
+            customDecks[id] = deckObj;
+            saveCustomDecksToStorage();
+            populateDeckSelector();
+            switchDeck(id);
+            closeDeckModal();
+        }
+
+        // ==========================================
+        // MANAGE DECKS MODAL & JSON IMPORT/EXPORT
+        // ==========================================
+
+        function openManageDecksModal() {
+            renderManageDecksList();
+            document.getElementById("manageModal").classList.remove("hidden");
+        }
+
+        function closeManageDecksModal() {
+            document.getElementById("manageModal").classList.add("hidden");
+        }
+
+        function renderManageDecksList() {
+            const container = document.getElementById("manageDecksList");
+            container.innerHTML = "";
+
+            const all = getAllDecks();
+
+            Object.values(all).forEach(deck => {
+                const card = document.createElement("div");
+                card.className = "flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800";
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="text-xs font-bold text-white">${deck.title}</h4>
+                            <span class="text-[9px] px-2 py-0.5 rounded-full font-bold ${deck.builtin ? 'bg-emerald-500/10 text-emerald-400' : 'bg-cyan-500/10 text-cyan-400'}">
+                                ${deck.builtin ? 'Built-in' : 'Custom'}
+                            </span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-0.5">${deck.rows.length} Substrates &bull; ${deck.columns.length} Reagents</p>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        ${!deck.builtin ? `
+                            <button onclick="openDeckModal(getAllDecks()['${deck.id}'])" class="p-1.5 text-slate-400 hover:text-cyan-300 text-xs" title="Edit">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deleteCustomDeck('${deck.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 text-xs" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        ` : '<span class="text-[10px] text-slate-600 font-semibold px-2">Protected</span>'}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function deleteCustomDeck(id) {
+            if (confirm("Are you sure you want to delete this custom deck?")) {
+                delete customDecks[id];
+                saveCustomDecksToStorage();
+                populateDeckSelector();
+                switchDeck("reduction");
+                renderManageDecksList();
+            }
+        }
+
+        function exportDecksJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(customDecks, null, 2));
+            const downloadAnchor = document.createElement("a");
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `chemforge_custom_decks_${Date.now()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importDecksJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (typeof imported === "object") {
+                        Object.assign(customDecks, imported);
+                        saveCustomDecksToStorage();
+                        populateDeckSelector();
+                        renderManageDecksList();
+                        alert("Custom decks imported successfully!");
+                    }
+                } catch (err) {
+                    alert("Invalid JSON file format.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Helper Utility
+        function escapeQuotes(str) {
+            if (!str) return '';
+            return String(str).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+        }
+    </script>
+</body>
+</html>
